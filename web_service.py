@@ -195,7 +195,7 @@ def weather_recomendation():
         elif start_city_status == 500 or end_city_status == 500:
             return "Сервис прогноза погоды перестал работать"
         elif start_city_status == 400 or end_city_status == 400:
-            return "Не найден прогноз погоды для этого города"
+            return "Не найден прогноз погоды для города"
         elif start_city_status == 'error' or end_city_status == 'error':
             return 'Произошла неизвестная ошибка'
         else:
