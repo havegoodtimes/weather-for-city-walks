@@ -1,5 +1,4 @@
 from flask import Flask
-# from flask import jsonify
 from flask import request
 from flask import render_template
 import requests
@@ -18,8 +17,6 @@ class WeatherConditionEstimator:
             location_info = requests.get(f"{self.location_api_url}?apikey={self.api_key}&q={lat}%2C%20{lon}", params = 'Key')
             if location_info.status_code == 200:
                 location_data = location_info.json()
-                # with open('test_location_info.json', 'w') as file:
-                #     json.dump(location_data, file)
             else:
                 return location_info.status_code
 
@@ -36,8 +33,6 @@ class WeatherConditionEstimator:
                 if city_info.json() == []:
                     return 'wrong_city_error'
                 city_data = city_info.json()
-                with open('test_city_info.json', 'w') as file:
-                    json.dump(city_data, file)
 
                 location_key = city_data[0]['Key']
                 return location_key
@@ -54,8 +49,6 @@ class WeatherConditionEstimator:
 
             if weather_info.status_code == 200:
                 weather_data = weather_info.json()
-                # with open('test_weather_info.json', 'w') as file:
-                #     json.dump(weather_data, file)
 
                 minimal_temp = weather_data["DailyForecasts"][0]["Temperature"]["Minimum"]["Value"]
                 maximal_temp = weather_data["DailyForecasts"][0]["Temperature"]["Maximum"]["Value"]
@@ -94,8 +87,6 @@ class WeatherConditionEstimator:
             
             if weather_info.status_code == 200:
                 weather_data = weather_info.json()
-                with open('test_city_weather_info.json', 'w') as file:
-                    json.dump(weather_data, file)
 
                 minimal_temp = weather_data["DailyForecasts"][0]["Temperature"]["Minimum"]["Value"]
                 maximal_temp = weather_data["DailyForecasts"][0]["Temperature"]["Maximum"]["Value"]
@@ -138,30 +129,10 @@ class WeatherConditionEstimator:
                 weather_info['ice_day_probability'] > 60 or
                 weather_info['uv_index'] > 7): 
                 
-                status = 'bad weather :('
-                # test_info_dict = {'minimal_temp': weather_info['minimal_temp'], 
-                #     'maximal_temp' : weather_info['maximal_temp'], 
-                #     # 'humidity_day_minimum' : weather_info['humidity_day_minimum'], 
-                #     # 'humidity_day_maximum' : weather_info['humidity_day_maximum'], 
-                #     'wind_day_speed' : weather_info['wind_day_speed'], 
-                #     'rain_day_probability' : weather_info['rain_day_probability'], 
-                #     'snow_day_probability' : weather_info['snow_day_probability'],
-                #     'ice_day_probability' : weather_info['ice_day_probability'], 
-                #     'uv_index' : weather_info['uv_index'],
-                #     'status' : 'bad weather :('}
+                status = 'плохая погода для прогулки'
                 return status
             else:
-                status = 'good weather'
-                # test_info_dict = {'minimal_temp': weather_info['minimal_temp'], 
-                #     'maximal_temp' : weather_info['maximal_temp'], 
-                #     # 'humidity_day_minimum' : weather_info['humidity_day_minimum'], 
-                #     # 'humidity_day_maximum' : weather_info['humidity_day_maximum'], 
-                #     'wind_day_speed' : weather_info['wind_day_speed'], 
-                #     'rain_day_probability' : weather_info['rain_day_probability'], 
-                #     'snow_day_probability' : weather_info['snow_day_probability'],
-                #     'ice_day_probability' : weather_info['ice_day_probability'], 
-                #     'uv_index' : weather_info['uv_index'],
-                #     'status' : 'good weather'}
+                status = 'хорошая погода для прогулки'
                 return status
         except:
             return 'error'
@@ -182,30 +153,10 @@ class WeatherConditionEstimator:
                 weather_info['ice_day_probability'] > 60 or
                 weather_info['uv_index'] > 7): 
 
-                status = 'bad weather :('
-                # test_info_dict = {'minimal_temp': weather_info['minimal_temp'], 
-                #     'maximal_temp' : weather_info['maximal_temp'], 
-                #     # 'humidity_day_minimum' : weather_info['humidity_day_minimum'], 
-                #     # 'humidity_day_maximum' : weather_info['humidity_day_maximum'], 
-                #     'wind_day_speed' : weather_info['wind_day_speed'], 
-                #     'rain_day_probability' : weather_info['rain_day_probability'], 
-                #     'snow_day_probability' : weather_info['snow_day_probability'],
-                #     'ice_day_probability' : weather_info['ice_day_probability'], 
-                #     'uv_index' : weather_info['uv_index'],
-                #     'status' : 'bad weather :('}
+                status = 'плохая погода для прогулки'
                 return status
             else:
-                status = 'good weather'
-                # test_info_dict = {'minimal_temp': weather_info['minimal_temp'], 
-                #     'maximal_temp' : weather_info['maximal_temp'], 
-                #     # 'humidity_day_minimum' : weather_info['humidity_day_minimum'], 
-                #     # 'humidity_day_maximum' : weather_info['humidity_day_maximum'], 
-                #     'wind_day_speed' : weather_info['wind_day_speed'], 
-                #     'rain_day_probability' : weather_info['rain_day_probability'], 
-                #     'snow_day_probability' : weather_info['snow_day_probability'],
-                #     'ice_day_probability' : weather_info['ice_day_probability'], 
-                #     'uv_index' : weather_info['uv_index'],
-                #     'status' : 'good weather'}
+                status = 'хорошая погода для прогулки'
                 return status
             
         except:
