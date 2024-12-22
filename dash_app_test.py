@@ -26,6 +26,7 @@ from dash import Dash, html, dcc, Input, Output, State, callback
 import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
 api_key = 'qV7vDxXTitSMqoxec5n77w5D5txhR7Kk'
 key_by_city_api_url = 'http://dataservice.accuweather.com/locations/v1/cities/search'
@@ -53,7 +54,7 @@ class WeatherConditionManager:
         except:
             return 'error'
         
-    def get_weather_info_1day(self, city):
+    def get_weather_info_5days(self, city):
         city = city.lower()
         forecast_api_url = 'http://dataservice.accuweather.com/forecasts/v1/daily/1day/'
         try:
@@ -68,18 +69,21 @@ class WeatherConditionManager:
             with open(f'C:/Users/Niko/Desktop/python_contest/Python_project_3/{city}_forecast_5days.json', 'r') as file:
                 weather_data = json.load(file)
 
+            weather_info_list = []
+            for i in range(0, 5, 2):
+                minimal_temp = weather_data["DailyForecasts"][i]["Temperature"]["Minimum"]["Value"]
+                maximal_temp = weather_data["DailyForecasts"][i]["Temperature"]["Maximum"]["Value"]
+                humidity_day_minimum = weather_data["DailyForecasts"][i]["Day"]["RelativeHumidity"]["Minimum"]
+                humidity_day_maximum = weather_data["DailyForecasts"][i]["Day"]["RelativeHumidity"]["Maximum"]
+                wind_day_speed = weather_data["DailyForecasts"][i]["Day"]["Wind"]["Speed"]["Value"]
+                rain_day_probability = weather_data["DailyForecasts"][i]["Day"]["RainProbability"]
+                snow_day_probability = weather_data["DailyForecasts"][i]["Day"]["SnowProbability"]
+                ice_day_probability = weather_data["DailyForecasts"][i]["Day"]["IceProbability"]
+                uv_index = weather_data["DailyForecasts"][i]['AirAndPollen'][5]["Value"]
+                date = weather_data["DailyForecasts"][i]["Date"]
 
-            minimal_temp = weather_data["DailyForecasts"][0]["Temperature"]["Minimum"]["Value"]
-            maximal_temp = weather_data["DailyForecasts"][0]["Temperature"]["Maximum"]["Value"]
-            humidity_day_minimum = weather_data["DailyForecasts"][0]["Day"]["RelativeHumidity"]["Minimum"]
-            humidity_day_maximum = weather_data["DailyForecasts"][0]["Day"]["RelativeHumidity"]["Maximum"]
-            wind_day_speed = weather_data["DailyForecasts"][0]["Day"]["Wind"]["Speed"]["Value"]
-            rain_day_probability = weather_data["DailyForecasts"][0]["Day"]["RainProbability"]
-            snow_day_probability = weather_data["DailyForecasts"][0]["Day"]["SnowProbability"]
-            ice_day_probability = weather_data["DailyForecasts"][0]["Day"]["IceProbability"]
-            uv_index = weather_data["DailyForecasts"][0]['AirAndPollen'][5]["Value"]
-
-            weather_info_list = [{'minimal_temp': minimal_temp, 
+                weather_info_list.append({'date': date,
+                                'minimal_temp': minimal_temp, 
                                 'maximal_temp' : maximal_temp, 
                                 'humidity_day_minimum' : humidity_day_minimum, 
                                 'humidity_day_maximum' : humidity_day_maximum, 
@@ -87,8 +91,7 @@ class WeatherConditionManager:
                                 'rain_day_probability' : rain_day_probability, 
                                 'snow_day_probability' : snow_day_probability,
                                 'ice_day_probability' : ice_day_probability, 
-                                'uv_index' : uv_index}]
-
+                                'uv_index' : uv_index})
             return weather_info_list
             
             # else:
@@ -97,8 +100,45 @@ class WeatherConditionManager:
         except:
             return 'error'
         
-    def create_dataframe(self, city):
-        weather_info_list = self.get_weather_info_1day(city)
+    def create_weather_dataframe(self, city):
+        weather_info_list = self.get_weather_info_5days(city)
+        date_list = []
+        minimal_temp_list = []
+        maximal_temp_list = []
+        humidity_day_minimum_list = []
+        humidity_day_maximum_list = []
+        wind_day_speed_list = []
+        rain_day_probability_list = []
+        snow_day_probability_list = []
+        ice_day_probability_list = []
+        uv_index_list = []
+
+        for weather_info in weather_info_list:
+            date_list.append(weather_info['date'])
+            minimal_temp_list.append(weather_info['minimal_temp'])
+            maximal_temp_list.append(weather_info['maximal_temp'])
+            humidity_day_minimum_list.append(weather_info['humidity_day_minimum'])
+            humidity_day_maximum_list.append(weather_info['humidity_day_maximum'])
+            wind_day_speed_list.append(weather_info['wind_day_speed'])
+            rain_day_probability_list.append(weather_info['rain_day_probability'])
+            snow_day_probability_list.append(weather_info['snow_day_probability'])
+            ice_day_probability_list.append(weather_info['ice_day_probability'])
+            uv_index_list.append(weather_info['uv_index'])
+
+        weather_forecast_df = pd.DataFrame({'index' : [0, 1, 2],
+                                            'date' : date_list,
+                                            'minimal_temp' : minimal_temp_list,
+                                            'maximal_temp' : maximal_temp_list,
+                                            'humidity_day_minimum' : humidity_day_minimum_list,
+                                            'humidity_day_maximum' : humidity_day_maximum_list,
+                                            'wind_day_speed' : wind_day_speed_list,
+                                            'rain_day_probability' : rain_day_probability_list,
+                                            'snow_day_probability' : snow_day_probability_list,
+                                            'ice_day_probability' : ice_day_probability_list,
+                                            'uv_index' : uv_index_list})
+        
+
+        return weather_forecast_df
 
 app = Dash()
 
@@ -223,64 +263,120 @@ def hide_graph_2(n_clicks):
 def create_graphic_1(n_clicks, dropdown_value, radio_item_value, city_1):
     global api_key
     global key_by_city_api_url
-
-    get_info = WeatherConditionManager(api_key, key_by_city_api_url)
-    city_1_forecast = get_info.get_weather_info_1day(city_1)
     
-    # создаём датафрейм с информацией о максимальной и минимальной температуре
-    city_1_temp = [['minimal_temp', city_1_forecast[0]['minimal_temp']], 
-                   ['maximal_temp', city_1_forecast[0]['maximal_temp']]]
-    city_1_temp_df = pd.DataFrame(city_1_temp, 
-                                columns=['temp', 'value'])
+    get_info = WeatherConditionManager(api_key, key_by_city_api_url)
+    city_1_forecast = get_info.get_weather_info_5days(city_1)
+    city_1_weather_df = get_info.create_weather_dataframe(city_1)
+
+    if radio_item_value == '1_day':
+        days = 1
+    elif radio_item_value == '3_day':
+        days = 2
+    elif radio_item_value == '5_day':
+        days = 3
     
     # создаём и настраиваем фигуру для графика температуры
-    city_1_temp_graph = px.bar(city_1_temp_df, x = 'temp', y = 'value',
-                             color_discrete_sequence = ['#9467bd']*len(city_1_temp_df))
+    city_1_temp_graph = go.Figure(data = [go.Bar(
+                                   x = city_1_weather_df.query(f'index < {days}')['date'], 
+                                   y = city_1_weather_df.query(f'index < {days}')['minimal_temp']),
+                                   go.Bar(
+                                   x = city_1_weather_df.query(f'index < {days}')['date'], 
+                                   y = city_1_weather_df.query(f'index < {days}')['maximal_temp'])])
     city_1_temp_graph.update_layout(width = 400, height = 400,
-                                    title = city_1)
-    
-    # создаём датафрейм с информацией о максимальной и минимальной влажности
-    city_1_humidity = [['humidity_day_minimum', city_1_forecast[0]['humidity_day_minimum']], 
-                    ['humidity_day_maximum', city_1_forecast[0]['humidity_day_maximum']]]
-    city_1_humidity_df = pd.DataFrame(city_1_humidity, 
-                                    columns=['humidity', 'value'])
+                                title = city_1)
     
     # создаём и настраиваем фигуру для графика влажности
-    city_1_humidity_graph = px.bar(city_1_humidity_df, x = 'humidity', y = 'value',
-                             color_discrete_sequence = ['#9467bd']*len(city_1_humidity_df))
-    city_1_humidity_graph.update_layout(width = 400, height = 400, title = city_1)
-
-    # создаём датафрейм с информацией о скорости ветра
-    city_1_wind_spd = [['wind_day_speed', city_1_forecast[0]['wind_day_speed']]]
-    city_1_wind_spd_df = pd.DataFrame(city_1_wind_spd, 
-                                    columns=['wind_speed', 'value'])
+    city_1_humidity_graph = go.Figure(data = [go.Bar(
+                                   x = city_1_weather_df.query(f'index < {days}')['date'], 
+                                   y = city_1_weather_df.query(f'index < {days}')['humidity_day_minimum']),
+                                   go.Bar(
+                                   x = city_1_weather_df.query(f'index < {days}')['date'], 
+                                   y = city_1_weather_df.query(f'index < {days}')['humidity_day_maximum'])])
+    city_1_humidity_graph.update_layout(width = 400, height = 400,
+                                title = city_1)
     
     # создаём и настраиваем фигуру для графика скорости ветра
-    city_1_wind_spd_graph = px.bar(city_1_wind_spd_df, x = 'wind_speed', y = 'value',
-                             color_discrete_sequence = ['#9467bd']*len(city_1_wind_spd_df))
-    city_1_wind_spd_graph.update_layout(width = 400, height = 400, title = city_1)
-
-    # создаём датафрейм с информацией о вероятности осадков и льда
-    city_1_probabilities = [['rain_day_probability', city_1_forecast[0]['rain_day_probability']],
-                            ['snow_day_probability', city_1_forecast[0]['snow_day_probability']],
-                            ['ice_day_probability', city_1_forecast[0]['ice_day_probability']]]
-    city_1_probabilities_df = pd.DataFrame(city_1_probabilities, 
-                                    columns=['metrics', 'probability'])
+    city_1_wind_spd_graph = go.Figure(data = [go.Bar(
+                                   x = city_1_weather_df.query(f'index < {days}')['date'], 
+                                   y = city_1_weather_df.query(f'index < {days}')['wind_day_speed'])])
+    city_1_wind_spd_graph.update_layout(width = 400, height = 400,
+                                title = city_1)
     
     # создаём и настраиваем фигуру для графика с вероятностями осадков и льда
-    city_1_probabilities_graph = px.bar(city_1_probabilities_df, x = 'metrics', y = 'probability',
-                             color_discrete_sequence = ['#9467bd']*len(city_1_probabilities_df))
-    city_1_probabilities_graph.update_layout(width = 400, height = 400, title = city_1)
+    city_1_probabilities_graph = go.Figure(data = [go.Bar(
+                                   x = city_1_weather_df.query(f'index < {days}')['date'], 
+                                   y = city_1_weather_df.query(f'index < {days}')['rain_day_probability']),
+                                   go.Bar(
+                                   x = city_1_weather_df.query(f'index < {days}')['date'], 
+                                   y = city_1_weather_df.query(f'index < {days}')['snow_day_probability']),
+                                   go.Bar(
+                                   x = city_1_weather_df.query(f'index < {days}')['date'], 
+                                   y = city_1_weather_df.query(f'index < {days}')['ice_day_probability'])])
+    city_1_probabilities_graph.update_layout(width = 400, height = 400,
+                                title = city_1)
 
-    # создаём датафрейм с информацией о уф-индексе
-    city_1_uv_index = [['uv_index', city_1_forecast[0]['uv_index']]]
-    city_1_uv_index_df = pd.DataFrame(city_1_uv_index, 
-                                    columns=['uv_index', 'value'])
-    
     # создаём и настраиваем фигуру для графика с информацией об уф-индексе
-    city_1_uv_index_graph = px.bar(city_1_uv_index_df, x = 'uv_index', y = 'value',
-                             color_discrete_sequence = ['#9467bd']*len(city_1_uv_index_df))
-    city_1_uv_index_graph.update_layout(width = 400, height = 400, title = city_1)
+    city_1_uv_index_graph = go.Figure(data = [go.Bar(
+                                   x = city_1_weather_df.query(f'index < {days}')['date'], 
+                                   y = city_1_weather_df.query(f'index < {days}')['uv_index'])])
+    city_1_uv_index_graph.update_layout(width = 400, height = 400,
+                                title = city_1)
+
+    
+    # создаём датафрейм с информацией о максимальной и минимальной температуре
+    # city_1_temp = [['minimal_temp', city_1_forecast[0]['minimal_temp']], 
+    #                ['maximal_temp', city_1_forecast[0]['maximal_temp']]]
+    # city_1_temp_df = pd.DataFrame(city_1_temp, 
+    #                             columns=['temp', 'value'])
+    
+    # # создаём и настраиваем фигуру для графика температуры
+    # city_1_temp_graph = px.bar(city_1_temp_df, x = 'temp', y = 'value',
+    #                          color_discrete_sequence = ['#9467bd']*len(city_1_temp_df))
+    # city_1_temp_graph.update_layout(width = 400, height = 400,
+    #                                 title = city_1)
+    
+    # # создаём датафрейм с информацией о максимальной и минимальной влажности
+    # city_1_humidity = [['humidity_day_minimum', city_1_forecast[0]['humidity_day_minimum']], 
+    #                 ['humidity_day_maximum', city_1_forecast[0]['humidity_day_maximum']]]
+    # city_1_humidity_df = pd.DataFrame(city_1_humidity, 
+    #                                 columns=['humidity', 'value'])
+    
+    # # создаём и настраиваем фигуру для графика влажности
+    # city_1_humidity_graph = px.bar(city_1_humidity_df, x = 'humidity', y = 'value',
+    #                          color_discrete_sequence = ['#9467bd']*len(city_1_humidity_df))
+    # city_1_humidity_graph.update_layout(width = 400, height = 400, title = city_1)
+
+    # # создаём датафрейм с информацией о скорости ветра
+    # city_1_wind_spd = [['wind_day_speed', city_1_forecast[0]['wind_day_speed']]]
+    # city_1_wind_spd_df = pd.DataFrame(city_1_wind_spd, 
+    #                                 columns=['wind_speed', 'value'])
+    
+    # # создаём и настраиваем фигуру для графика скорости ветра
+    # city_1_wind_spd_graph = px.bar(city_1_wind_spd_df, x = 'wind_speed', y = 'value',
+    #                          color_discrete_sequence = ['#9467bd']*len(city_1_wind_spd_df))
+    # city_1_wind_spd_graph.update_layout(width = 400, height = 400, title = city_1)
+
+    # # создаём датафрейм с информацией о вероятности осадков и льда
+    # city_1_probabilities = [['rain_day_probability', city_1_forecast[0]['rain_day_probability']],
+    #                         ['snow_day_probability', city_1_forecast[0]['snow_day_probability']],
+    #                         ['ice_day_probability', city_1_forecast[0]['ice_day_probability']]]
+    # city_1_probabilities_df = pd.DataFrame(city_1_probabilities, 
+    #                                 columns=['metrics', 'probability'])
+    
+    # # создаём и настраиваем фигуру для графика с вероятностями осадков и льда
+    # city_1_probabilities_graph = px.bar(city_1_probabilities_df, x = 'metrics', y = 'probability',
+    #                          color_discrete_sequence = ['#9467bd']*len(city_1_probabilities_df))
+    # city_1_probabilities_graph.update_layout(width = 400, height = 400, title = city_1)
+
+    # # создаём датафрейм с информацией о уф-индексе
+    # city_1_uv_index = [['uv_index', city_1_forecast[0]['uv_index']]]
+    # city_1_uv_index_df = pd.DataFrame(city_1_uv_index, 
+    #                                 columns=['uv_index', 'value'])
+    
+    # # создаём и настраиваем фигуру для графика с информацией об уф-индексе
+    # city_1_uv_index_graph = px.bar(city_1_uv_index_df, x = 'uv_index', y = 'value',
+    #                          color_discrete_sequence = ['#9467bd']*len(city_1_uv_index_df))
+    # city_1_uv_index_graph.update_layout(width = 400, height = 400, title = city_1)
 
     if dropdown_value == 'Температура':
         return city_1_temp_graph
@@ -313,7 +409,7 @@ def create_graphic_2(n_clicks, dropdown_value, city_2):
     global key_by_city_api_url
 
     get_info = WeatherConditionManager(api_key, key_by_city_api_url)
-    city_2_forecast = get_info.get_weather_info_1day(city_2)
+    city_2_forecast = get_info.get_weather_info_5days(city_2)
     
     # создаём датафрейм с информацией о максимальной и минимальной температуре
     city_2_temp = [['minimal_temp', city_2_forecast[0]['minimal_temp']], 
