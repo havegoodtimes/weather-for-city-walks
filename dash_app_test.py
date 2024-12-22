@@ -21,12 +21,37 @@
 
 
 import json
-# import requests
+import requests
 from dash import Dash, html, dcc, Input, Output, State, callback
 import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+
+api_key = 'yI9Novx6WYEbkMGHp6D7rcjliPSrJTr0'
+forecast_hourly_api_url = 'http://dataservice.accuweather.com/forecasts/v1/daily/5day/'
+moscow_code = 294021
+dubai_code = 323091
+nyc_code = 349727
+amsterdam_code = 249758
+shanghai_code = 106577
+
+weather_info_nyc = requests.get(f'{forecast_hourly_api_url}{nyc_code}?apikey={api_key}&details=true&metric=true')
+weather_info_amsterdam = requests.get(f'{forecast_hourly_api_url}{amsterdam_code}?apikey={api_key}&details=true&metric=true')
+weather_info_shanghai = requests.get(f'{forecast_hourly_api_url}{shanghai_code}?apikey={api_key}&details=true&metric=true')
+
+nyc_data = weather_info_nyc.json()
+amsterdam_data = weather_info_amsterdam.json()
+shanghai_data = weather_info_shanghai.json()
+
+with open('nyc_forecast_5days.json', 'w') as file:
+    json.dump(nyc_data, file)
+
+with open('amsterdam_forecast_5days.json', 'w') as file:
+    json.dump(amsterdam_data, file)
+
+with open('shanghai_forecast_5days.json', 'w') as file:
+    json.dump(shanghai_data, file)
 
 api_key = 'qV7vDxXTitSMqoxec5n77w5D5txhR7Kk'
 key_by_city_api_url = 'http://dataservice.accuweather.com/locations/v1/cities/search'
@@ -56,7 +81,7 @@ class WeatherConditionManager:
         
     def get_weather_info_5days(self, city):
         city = city.lower()
-        forecast_api_url = 'http://dataservice.accuweather.com/forecasts/v1/daily/1day/'
+        forecast_api_url = 'http://dataservice.accuweather.com/forecasts/v1/daily/5day/'
         try:
             location_key = self.get_location_key_by_city(city)
             # if (location_key in [400, 401, 403, 404, 500, 503] or 
@@ -205,6 +230,77 @@ app.layout = [
                 'height' : 400
             }}
               )]),
+            html.Div(id = 'input_container_3', children=[dcc.Input(id='city_3_input',
+                  placeholder='3 город',
+                  type = 'text',
+                  value = ''
+              )]),
+            html.Div(id = 'dropdown_description_3',
+                  children='Выберите интересующие метрики прогноза погода:'),
+            html.Div(id = 'dropdown_container_3',
+                       children = [dcc.Dropdown(id = 'city_3_dropdown',
+                           options=['Температура', 'Влажность', 'Скорость ветра',
+                                    'Вероятность осадков и льда', 'УФ-индекс'],
+                                    value = 'Температура')]),
+            html.Div(id = 'graph_container_3',children = [dcc.Graph(id='city_3_graph',
+                  figure={'data': [
+                {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
+                {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': 'h'},
+            ],
+            'layout': {
+                'title': 'Barchart 3',
+                'width' : 400,
+                'height' : 400
+            }}
+              )]),
+            html.Div(id = 'input_container_4', children=[dcc.Input(id='city_4_input',
+                  placeholder='4 город',
+                  type = 'text',
+                  value = ''
+              )]),
+            html.Div(id = 'dropdown_description_4',
+                  children='Выберите интересующие метрики прогноза погода:'),
+            html.Div(id = 'dropdown_container_4',
+                       children = [dcc.Dropdown(id = 'city_4_dropdown',
+                           options=['Температура', 'Влажность', 'Скорость ветра',
+                                    'Вероятность осадков и льда', 'УФ-индекс'],
+                                    value = 'Температура')]),
+            html.Div(id = 'graph_container_4',children = [dcc.Graph(id='city_4_graph',
+                  figure={'data': [
+                {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
+                {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': 'h'},
+            ],
+            'layout': {
+                'title': 'Barchart 4',
+                'width' : 400,
+                'height' : 400
+            }}
+              )]),
+            html.Div(id = 'input_container_5', children=[dcc.Input(id='city_5_input',
+                  placeholder='5 город',
+                  type = 'text',
+                  value = ''
+              )]),
+            html.Div(id = 'dropdown_description_5',
+                  children='Выберите интересующие метрики прогноза погода:'),
+            html.Div(id = 'dropdown_container_5',
+                       children = [dcc.Dropdown(id = 'city_5_dropdown',
+                           options=['Температура', 'Влажность', 'Скорость ветра',
+                                    'Вероятность осадков и льда', 'УФ-индекс'],
+                                    value = 'Температура')]),
+            html.Div(id = 'graph_container_5',children = [dcc.Graph(id='city_5_graph',
+                  figure={'data': [
+                {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
+                {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': 'h'},
+            ],
+            'layout': {
+                'title': 'Barchart 5',
+                'width' : 400,
+                'height' : 400
+            }}
+              )]),
+            html.Div(html.Button('Добавить дополнительные города', 
+                                 id = 'add_city_input', n_clicks=0)),
             html.Div(html.Button('Отправить', id = 'submit_cities', n_clicks=0))]
 
 #callback, который обновляет первую строку на странице (информация о выбранных городах)
@@ -265,7 +361,6 @@ def create_graphic_1(n_clicks, dropdown_value, radio_item_value, city_1):
     global key_by_city_api_url
     
     get_info = WeatherConditionManager(api_key, key_by_city_api_url)
-    city_1_forecast = get_info.get_weather_info_5days(city_1)
     city_1_weather_df = get_info.create_weather_dataframe(city_1)
 
     if radio_item_value == '1_day':
@@ -322,62 +417,6 @@ def create_graphic_1(n_clicks, dropdown_value, radio_item_value, city_1):
     city_1_uv_index_graph.update_layout(width = 400, height = 400,
                                 title = city_1)
 
-    
-    # создаём датафрейм с информацией о максимальной и минимальной температуре
-    # city_1_temp = [['minimal_temp', city_1_forecast[0]['minimal_temp']], 
-    #                ['maximal_temp', city_1_forecast[0]['maximal_temp']]]
-    # city_1_temp_df = pd.DataFrame(city_1_temp, 
-    #                             columns=['temp', 'value'])
-    
-    # # создаём и настраиваем фигуру для графика температуры
-    # city_1_temp_graph = px.bar(city_1_temp_df, x = 'temp', y = 'value',
-    #                          color_discrete_sequence = ['#9467bd']*len(city_1_temp_df))
-    # city_1_temp_graph.update_layout(width = 400, height = 400,
-    #                                 title = city_1)
-    
-    # # создаём датафрейм с информацией о максимальной и минимальной влажности
-    # city_1_humidity = [['humidity_day_minimum', city_1_forecast[0]['humidity_day_minimum']], 
-    #                 ['humidity_day_maximum', city_1_forecast[0]['humidity_day_maximum']]]
-    # city_1_humidity_df = pd.DataFrame(city_1_humidity, 
-    #                                 columns=['humidity', 'value'])
-    
-    # # создаём и настраиваем фигуру для графика влажности
-    # city_1_humidity_graph = px.bar(city_1_humidity_df, x = 'humidity', y = 'value',
-    #                          color_discrete_sequence = ['#9467bd']*len(city_1_humidity_df))
-    # city_1_humidity_graph.update_layout(width = 400, height = 400, title = city_1)
-
-    # # создаём датафрейм с информацией о скорости ветра
-    # city_1_wind_spd = [['wind_day_speed', city_1_forecast[0]['wind_day_speed']]]
-    # city_1_wind_spd_df = pd.DataFrame(city_1_wind_spd, 
-    #                                 columns=['wind_speed', 'value'])
-    
-    # # создаём и настраиваем фигуру для графика скорости ветра
-    # city_1_wind_spd_graph = px.bar(city_1_wind_spd_df, x = 'wind_speed', y = 'value',
-    #                          color_discrete_sequence = ['#9467bd']*len(city_1_wind_spd_df))
-    # city_1_wind_spd_graph.update_layout(width = 400, height = 400, title = city_1)
-
-    # # создаём датафрейм с информацией о вероятности осадков и льда
-    # city_1_probabilities = [['rain_day_probability', city_1_forecast[0]['rain_day_probability']],
-    #                         ['snow_day_probability', city_1_forecast[0]['snow_day_probability']],
-    #                         ['ice_day_probability', city_1_forecast[0]['ice_day_probability']]]
-    # city_1_probabilities_df = pd.DataFrame(city_1_probabilities, 
-    #                                 columns=['metrics', 'probability'])
-    
-    # # создаём и настраиваем фигуру для графика с вероятностями осадков и льда
-    # city_1_probabilities_graph = px.bar(city_1_probabilities_df, x = 'metrics', y = 'probability',
-    #                          color_discrete_sequence = ['#9467bd']*len(city_1_probabilities_df))
-    # city_1_probabilities_graph.update_layout(width = 400, height = 400, title = city_1)
-
-    # # создаём датафрейм с информацией о уф-индексе
-    # city_1_uv_index = [['uv_index', city_1_forecast[0]['uv_index']]]
-    # city_1_uv_index_df = pd.DataFrame(city_1_uv_index, 
-    #                                 columns=['uv_index', 'value'])
-    
-    # # создаём и настраиваем фигуру для графика с информацией об уф-индексе
-    # city_1_uv_index_graph = px.bar(city_1_uv_index_df, x = 'uv_index', y = 'value',
-    #                          color_discrete_sequence = ['#9467bd']*len(city_1_uv_index_df))
-    # city_1_uv_index_graph.update_layout(width = 400, height = 400, title = city_1)
-
     if dropdown_value == 'Температура':
         return city_1_temp_graph
     
@@ -399,72 +438,73 @@ def create_graphic_1(n_clicks, dropdown_value, radio_item_value, city_1):
             [Input(component_id='submit_cities',
                   component_property='n_clicks'),
             Input(component_id='city_2_dropdown',
+                  component_property='value'),
+            Input(component_id='radio_items',
                   component_property='value')],
             State(component_id='city_2_input', 
            component_property='value'),
             prevent_initial_call = True)
 
-def create_graphic_2(n_clicks, dropdown_value, city_2):
+def create_graphic_2(n_clicks, dropdown_value, radio_item_value, city_2):
     global api_key
     global key_by_city_api_url
 
     get_info = WeatherConditionManager(api_key, key_by_city_api_url)
-    city_2_forecast = get_info.get_weather_info_5days(city_2)
-    
-    # создаём датафрейм с информацией о максимальной и минимальной температуре
-    city_2_temp = [['minimal_temp', city_2_forecast[0]['minimal_temp']], 
-                   ['maximal_temp', city_2_forecast[0]['maximal_temp']]]
-    city_2_temp_df = pd.DataFrame(city_2_temp, 
-                                columns=['temp', 'value'])
+    city_2_weather_df = get_info.create_weather_dataframe(city_2)
+
+    if radio_item_value == '1_day':
+        days = 1
+    elif radio_item_value == '3_day':
+        days = 2
+    elif radio_item_value == '5_day':
+        days = 3
     
     # создаём и настраиваем фигуру для графика температуры
-    city_2_temp_graph = px.bar(city_2_temp_df, x = 'temp', y = 'value',
-                             color_discrete_sequence = ['#9467bd']*len(city_2_temp_df))
+    city_2_temp_graph = go.Figure(data = [go.Bar(
+                                   x = city_2_weather_df.query(f'index < {days}')['date'], 
+                                   y = city_2_weather_df.query(f'index < {days}')['minimal_temp']),
+                                   go.Bar(
+                                   x = city_2_weather_df.query(f'index < {days}')['date'], 
+                                   y = city_2_weather_df.query(f'index < {days}')['maximal_temp'])])
     city_2_temp_graph.update_layout(width = 400, height = 400,
-                                    title = city_2)
-    
-    # создаём датафрейм с информацией о максимальной и минимальной влажности
-    city_2_humidity = [['humidity_day_minimum', city_2_forecast[0]['humidity_day_minimum']], 
-                    ['humidity_day_maximum', city_2_forecast[0]['humidity_day_maximum']]]
-    city_2_humidity_df = pd.DataFrame(city_2_humidity, 
-                                    columns=['humidity', 'value'])
+                                title = city_2)
     
     # создаём и настраиваем фигуру для графика влажности
-    city_2_humidity_graph = px.bar(city_2_humidity_df, x = 'humidity', y = 'value',
-                             color_discrete_sequence = ['#9467bd']*len(city_2_humidity_df))
-    city_2_humidity_graph.update_layout(width = 400, height = 400, title = city_2)
-
-    # создаём датафрейм с информацией о скорости ветра
-    city_2_wind_spd = [['wind_day_speed', city_2_forecast[0]['wind_day_speed']]]
-    city_2_wind_spd_df = pd.DataFrame(city_2_wind_spd, 
-                                    columns=['wind_speed', 'value'])
+    city_2_humidity_graph = go.Figure(data = [go.Bar(
+                                   x = city_2_weather_df.query(f'index < {days}')['date'], 
+                                   y = city_2_weather_df.query(f'index < {days}')['humidity_day_minimum']),
+                                   go.Bar(
+                                   x = city_2_weather_df.query(f'index < {days}')['date'], 
+                                   y = city_2_weather_df.query(f'index < {days}')['humidity_day_maximum'])])
+    city_2_humidity_graph.update_layout(width = 400, height = 400,
+                                title = city_2)
     
     # создаём и настраиваем фигуру для графика скорости ветра
-    city_2_wind_spd_graph = px.bar(city_2_wind_spd_df, x = 'wind_speed', y = 'value',
-                             color_discrete_sequence = ['#9467bd']*len(city_2_wind_spd_df))
-    city_2_wind_spd_graph.update_layout(width = 400, height = 400, title = city_2)
-
-    # создаём датафрейм с информацией о вероятности осадков и льда
-    city_2_probabilities = [['rain_day_probability', city_2_forecast[0]['rain_day_probability']],
-                            ['snow_day_probability', city_2_forecast[0]['snow_day_probability']],
-                            ['ice_day_probability', city_2_forecast[0]['ice_day_probability']]]
-    city_2_probabilities_df = pd.DataFrame(city_2_probabilities, 
-                                    columns=['metrics', 'probability'])
+    city_2_wind_spd_graph = go.Figure(data = [go.Bar(
+                                   x = city_2_weather_df.query(f'index < {days}')['date'], 
+                                   y = city_2_weather_df.query(f'index < {days}')['wind_day_speed'])])
+    city_2_wind_spd_graph.update_layout(width = 400, height = 400,
+                                title = city_2)
     
     # создаём и настраиваем фигуру для графика с вероятностями осадков и льда
-    city_2_probabilities_graph = px.bar(city_2_probabilities_df, x = 'metrics', y = 'probability',
-                             color_discrete_sequence = ['#9467bd']*len(city_2_probabilities_df))
-    city_2_probabilities_graph.update_layout(width = 400, height = 400, title = city_2)
+    city_2_probabilities_graph = go.Figure(data = [go.Bar(
+                                   x = city_2_weather_df.query(f'index < {days}')['date'], 
+                                   y = city_2_weather_df.query(f'index < {days}')['rain_day_probability']),
+                                   go.Bar(
+                                   x = city_2_weather_df.query(f'index < {days}')['date'], 
+                                   y = city_2_weather_df.query(f'index < {days}')['snow_day_probability']),
+                                   go.Bar(
+                                   x = city_2_weather_df.query(f'index < {days}')['date'], 
+                                   y = city_2_weather_df.query(f'index < {days}')['ice_day_probability'])])
+    city_2_probabilities_graph.update_layout(width = 400, height = 400,
+                                title = city_2)
 
-    # создаём датафрейм с информацией о уф-индексе
-    city_2_uv_index = [['uv_index', city_2_forecast[0]['uv_index']]]
-    city_2_uv_index_df = pd.DataFrame(city_2_uv_index, 
-                                    columns=['uv_index', 'value'])
-    
     # создаём и настраиваем фигуру для графика с информацией об уф-индексе
-    city_2_uv_index_graph = px.bar(city_2_uv_index_df, x = 'uv_index', y = 'value',
-                             color_discrete_sequence = ['#9467bd']*len(city_2_uv_index_df))
-    city_2_uv_index_graph.update_layout(width = 400, height = 400, title = city_2)
+    city_2_uv_index_graph = go.Figure(data = [go.Bar(
+                                   x = city_2_weather_df.query(f'index < {days}')['date'], 
+                                   y = city_2_weather_df.query(f'index < {days}')['uv_index'])])
+    city_2_uv_index_graph.update_layout(width = 400, height = 400,
+                                title = city_2)
 
     if dropdown_value == 'Температура':
         return city_2_temp_graph
@@ -546,6 +586,474 @@ def hide_radioitems(n_clicks):
     if n_clicks != 0:
         return {'display' : 'block'}
     return {'display' : 'none'}
+
+#callback, отвечающий за отображение/скрытие поля ввода для третьего города
+@app.callback(Output(component_id='input_container_3',
+                     component_property='style'),
+            Input(component_id='add_city_input',
+          component_property='n_clicks'))
+
+def hide_input_3(n_clicks):
+    if n_clicks > 0:
+        return {'display' : 'block'}
+    return {'display' : 'none'}
+
+#callback, отвечающий за отображение/скрытие поля ввода для четвёртого города
+@app.callback(Output(component_id='input_container_4',
+                     component_property='style'),
+            Input(component_id='add_city_input',
+          component_property='n_clicks'))
+
+def hide_input_4(n_clicks):
+    if n_clicks > 1:
+        return {'display' : 'block'}
+    return {'display' : 'none'}
+
+#callback, отвечающий за отображение/скрытие поля ввода для четвёртого города
+@app.callback(Output(component_id='input_container_5',
+                     component_property='style'),
+            Input(component_id='add_city_input',
+          component_property='n_clicks'))
+
+def hide_input_5(n_clicks):
+    if n_clicks > 2:
+        return {'display' : 'block'}
+    return {'display' : 'none'}
+
+#callback, отвечающий за отображение/скрытие описания выпадающего списка для 3 города
+@app.callback(Output(component_id='dropdown_description_3',
+                     component_property='style'),
+            Input(component_id='submit_cities',
+          component_property='n_clicks'),
+          State(component_id='add_city_input',
+                component_property='n_clicks'))
+
+def hide_dropdown_description_3(submit_clicks, add_city_clicks):
+    if submit_clicks >0 and add_city_clicks > 0:
+        return {'display' : 'block'}
+    return {'display' : 'none'}
+
+#callback, отвечающий за отображение/скрытие выпадающего списка для 3 города
+@app.callback(Output(component_id='dropdown_container_3',
+                     component_property='style'),
+            Input(component_id='submit_cities',
+          component_property='n_clicks'),
+          State(component_id='add_city_input',
+                component_property='n_clicks'))
+
+def hide_dropdown_3(submit_clicks, add_city_clicks):
+    if submit_clicks > 0 and add_city_clicks > 0:
+        return {'display' : 'block'}
+    return {'display' : 'none'}
+
+#callback, отвечающий за отображение/скрытие описания выпадающего списка для 4 города
+@app.callback(Output(component_id='dropdown_description_4',
+                     component_property='style'),
+            Input(component_id='submit_cities',
+          component_property='n_clicks'),
+          State(component_id='add_city_input',
+                component_property='n_clicks'))
+
+def hide_dropdown_description_4(submit_clicks, add_city_clicks):
+    if submit_clicks >0 and add_city_clicks > 1:
+        return {'display' : 'block'}
+    return {'display' : 'none'}
+
+#callback, отвечающий за отображение/скрытие выпадающего списка для 4 города
+@app.callback(Output(component_id='dropdown_container_4',
+                     component_property='style'),
+            Input(component_id='submit_cities',
+          component_property='n_clicks'),
+          State(component_id='add_city_input',
+                component_property='n_clicks'))
+
+def hide_dropdown_4(submit_clicks, add_city_clicks):
+    if submit_clicks > 0 and add_city_clicks > 1:
+        return {'display' : 'block'}
+    return {'display' : 'none'}
+
+#callback, отвечающий за отображение/скрытие описания выпадающего списка для 5 города
+@app.callback(Output(component_id='dropdown_description_5',
+                     component_property='style'),
+            Input(component_id='submit_cities',
+          component_property='n_clicks'),
+          State(component_id='add_city_input',
+                component_property='n_clicks'))
+
+def hide_dropdown_description_5(submit_clicks, add_city_clicks):
+    if submit_clicks >0 and add_city_clicks > 2:
+        return {'display' : 'block'}
+    return {'display' : 'none'}
+
+#callback, отвечающий за отображение/скрытие выпадающего списка для 5 города
+@app.callback(Output(component_id='dropdown_container_5',
+                     component_property='style'),
+            Input(component_id='submit_cities',
+          component_property='n_clicks'),
+          State(component_id='add_city_input',
+                component_property='n_clicks'))
+
+def hide_dropdown_5(submit_clicks, add_city_clicks):
+    if submit_clicks > 0 and add_city_clicks > 2:
+        return {'display' : 'block'}
+    return {'display' : 'none'}
+
+#callback, отвечающий за отображение/скрытие графика для 3 города
+@app.callback(Output(component_id='graph_container_3',
+                     component_property='style'),
+            Input(component_id='submit_cities',
+          component_property='n_clicks'),
+          State(component_id='add_city_input',
+                component_property='n_clicks'))
+
+def hide_graph_3(submit_clicks, add_city_clicks):
+    if submit_clicks > 0 and add_city_clicks > 0:
+        return {'display' : 'block'}
+    return {'display' : 'none'}
+
+#callback, отвечающий за отображение/скрытие графика для 4 города
+@app.callback(Output(component_id='graph_container_4',
+                     component_property='style'),
+            Input(component_id='submit_cities',
+          component_property='n_clicks'),
+          State(component_id='add_city_input',
+                component_property='n_clicks'))
+
+def hide_graph_4(submit_clicks, add_city_clicks):
+    if submit_clicks > 0 and add_city_clicks > 1:
+        return {'display' : 'block'}
+    return {'display' : 'none'}
+
+#callback, отвечающий за отображение/скрытие графика для 5 города
+@app.callback(Output(component_id='graph_container_5',
+                     component_property='style'),
+            Input(component_id='submit_cities',
+          component_property='n_clicks'),
+          State(component_id='add_city_input',
+                component_property='n_clicks'))
+
+def hide_graph_5(submit_clicks, add_city_clicks):
+    if submit_clicks > 0 and add_city_clicks > 2:
+        return {'display' : 'block'}
+    return {'display' : 'none'}
+
+#callback, который строит графики для 3 города
+@app.callback(Output(component_id='city_3_graph',
+                     component_property='figure'),
+            [Input(component_id='submit_cities',
+                  component_property='n_clicks'),
+            Input(component_id='city_3_dropdown',
+                  component_property='value'),
+            Input(component_id='radio_items',
+                  component_property='value')],
+            [State(component_id='city_3_input', 
+           component_property='value'),
+           State(component_id='add_city_input',
+                component_property='n_clicks') ],
+            prevent_initial_call = True)
+
+def create_graphic_3(submit_clicks, dropdown_value, radio_item_value, city_3, add_city_clicks):
+    global api_key
+    global key_by_city_api_url
+
+    if submit_clicks > 0 and add_city_clicks > 0:
+    
+        get_info = WeatherConditionManager(api_key, key_by_city_api_url)
+        city_3_weather_df = get_info.create_weather_dataframe(city_3)
+
+
+        if radio_item_value == '1_day':
+            days = 1
+        elif radio_item_value == '3_day':
+            days = 2
+        elif radio_item_value == '5_day':
+            days = 3
+        
+        # создаём и настраиваем фигуру для графика температуры
+        city_3_temp_graph = go.Figure(data = [go.Bar(
+                                    x = city_3_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_3_weather_df.query(f'index < {days}')['minimal_temp']),
+                                    go.Bar(
+                                    x = city_3_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_3_weather_df.query(f'index < {days}')['maximal_temp'])])
+        city_3_temp_graph.update_layout(width = 400, height = 400,
+                                    title = city_3)
+        
+        # создаём и настраиваем фигуру для графика влажности
+        city_3_humidity_graph = go.Figure(data = [go.Bar(
+                                    x = city_3_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_3_weather_df.query(f'index < {days}')['humidity_day_minimum']),
+                                    go.Bar(
+                                    x = city_3_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_3_weather_df.query(f'index < {days}')['humidity_day_maximum'])])
+        city_3_humidity_graph.update_layout(width = 400, height = 400,
+                                    title = city_3)
+        
+        # создаём и настраиваем фигуру для графика скорости ветра
+        city_3_wind_spd_graph = go.Figure(data = [go.Bar(
+                                    x = city_3_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_3_weather_df.query(f'index < {days}')['wind_day_speed'])])
+        city_3_wind_spd_graph.update_layout(width = 400, height = 400,
+                                    title = city_3)
+        
+        # создаём и настраиваем фигуру для графика с вероятностями осадков и льда
+        city_3_probabilities_graph = go.Figure(data = [go.Bar(
+                                    x = city_3_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_3_weather_df.query(f'index < {days}')['rain_day_probability']),
+                                    go.Bar(
+                                    x = city_3_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_3_weather_df.query(f'index < {days}')['snow_day_probability']),
+                                    go.Bar(
+                                    x = city_3_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_3_weather_df.query(f'index < {days}')['ice_day_probability'])])
+        city_3_probabilities_graph.update_layout(width = 400, height = 400,
+                                    title = city_3)
+
+        # создаём и настраиваем фигуру для графика с информацией об уф-индексе
+        city_3_uv_index_graph = go.Figure(data = [go.Bar(
+                                    x = city_3_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_3_weather_df.query(f'index < {days}')['uv_index'])])
+        city_3_uv_index_graph.update_layout(width = 400, height = 400,
+                                    title = city_3)
+
+        if dropdown_value == 'Температура':
+            return city_3_temp_graph
+        
+        elif dropdown_value == 'Влажность':
+            return city_3_humidity_graph
+        
+        elif dropdown_value == 'Скорость ветра':
+            return city_3_wind_spd_graph
+        
+        elif dropdown_value == 'Вероятность осадков и льда':
+            return city_3_probabilities_graph
+        
+        elif dropdown_value == 'УФ-индекс':
+            return city_3_uv_index_graph
+        
+    else:
+        fig={'data': [
+                {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
+                {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': 'h'},
+            ],
+            'layout': {
+                'title': 'Barchart 3',
+                'width' : 400,
+                'height' : 400
+            }}
+        return fig
+    
+#callback, который строит графики для 4 города
+@app.callback(Output(component_id='city_4_graph',
+                     component_property='figure'),
+            [Input(component_id='submit_cities',
+                  component_property='n_clicks'),
+            Input(component_id='city_4_dropdown',
+                  component_property='value'),
+            Input(component_id='radio_items',
+                  component_property='value')],
+            [State(component_id='city_4_input', 
+           component_property='value'),
+           State(component_id='add_city_input',
+                component_property='n_clicks') ],
+            prevent_initial_call = True)
+
+def create_graphic_4(submit_clicks, dropdown_value, radio_item_value, city_4, add_city_clicks):
+    global api_key
+    global key_by_city_api_url
+
+    if submit_clicks > 0 and add_city_clicks > 1:
+    
+        get_info = WeatherConditionManager(api_key, key_by_city_api_url)
+        city_4_weather_df = get_info.create_weather_dataframe(city_4)
+
+
+        if radio_item_value == '1_day':
+            days = 1
+        elif radio_item_value == '3_day':
+            days = 2
+        elif radio_item_value == '5_day':
+            days = 3
+        
+        # создаём и настраиваем фигуру для графика температуры
+        city_4_temp_graph = go.Figure(data = [go.Bar(
+                                    x = city_4_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_4_weather_df.query(f'index < {days}')['minimal_temp']),
+                                    go.Bar(
+                                    x = city_4_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_4_weather_df.query(f'index < {days}')['maximal_temp'])])
+        city_4_temp_graph.update_layout(width = 400, height = 400,
+                                    title = city_4)
+        
+        # создаём и настраиваем фигуру для графика влажности
+        city_4_humidity_graph = go.Figure(data = [go.Bar(
+                                    x = city_4_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_4_weather_df.query(f'index < {days}')['humidity_day_minimum']),
+                                    go.Bar(
+                                    x = city_4_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_4_weather_df.query(f'index < {days}')['humidity_day_maximum'])])
+        city_4_humidity_graph.update_layout(width = 400, height = 400,
+                                    title = city_4)
+        
+        # создаём и настраиваем фигуру для графика скорости ветра
+        city_4_wind_spd_graph = go.Figure(data = [go.Bar(
+                                    x = city_4_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_4_weather_df.query(f'index < {days}')['wind_day_speed'])])
+        city_4_wind_spd_graph.update_layout(width = 400, height = 400,
+                                    title = city_4)
+        
+        # создаём и настраиваем фигуру для графика с вероятностями осадков и льда
+        city_4_probabilities_graph = go.Figure(data = [go.Bar(
+                                    x = city_4_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_4_weather_df.query(f'index < {days}')['rain_day_probability']),
+                                    go.Bar(
+                                    x = city_4_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_4_weather_df.query(f'index < {days}')['snow_day_probability']),
+                                    go.Bar(
+                                    x = city_4_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_4_weather_df.query(f'index < {days}')['ice_day_probability'])])
+        city_4_probabilities_graph.update_layout(width = 400, height = 400,
+                                    title = city_4)
+
+        # создаём и настраиваем фигуру для графика с информацией об уф-индексе
+        city_4_uv_index_graph = go.Figure(data = [go.Bar(
+                                    x = city_4_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_4_weather_df.query(f'index < {days}')['uv_index'])])
+        city_4_uv_index_graph.update_layout(width = 400, height = 400,
+                                    title = city_4)
+
+        if dropdown_value == 'Температура':
+            return city_4_temp_graph
+        
+        elif dropdown_value == 'Влажность':
+            return city_4_humidity_graph
+        
+        elif dropdown_value == 'Скорость ветра':
+            return city_4_wind_spd_graph
+        
+        elif dropdown_value == 'Вероятность осадков и льда':
+            return city_4_probabilities_graph
+        
+        elif dropdown_value == 'УФ-индекс':
+            return city_4_uv_index_graph
+        
+    else:
+        fig={'data': [
+                {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
+                {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': 'h'},
+            ],
+            'layout': {
+                'title': 'Barchart 4',
+                'width' : 400,
+                'height' : 400
+            }}
+        return fig
+    
+#callback, который строит графики для 5 города
+@app.callback(Output(component_id='city_5_graph',
+                     component_property='figure'),
+            [Input(component_id='submit_cities',
+                  component_property='n_clicks'),
+            Input(component_id='city_5_dropdown',
+                  component_property='value'),
+            Input(component_id='radio_items',
+                  component_property='value')],
+            [State(component_id='city_5_input', 
+           component_property='value'),
+           State(component_id='add_city_input',
+                component_property='n_clicks') ],
+            prevent_initial_call = True)
+
+def create_graphic_5(submit_clicks, dropdown_value, radio_item_value, city_5, add_city_clicks):
+    global api_key
+    global key_by_city_api_url
+
+    if submit_clicks > 0 and add_city_clicks > 2:
+    
+        get_info = WeatherConditionManager(api_key, key_by_city_api_url)
+        city_5_weather_df = get_info.create_weather_dataframe(city_5)
+
+
+        if radio_item_value == '1_day':
+            days = 1
+        elif radio_item_value == '3_day':
+            days = 2
+        elif radio_item_value == '5_day':
+            days = 3
+        
+        # создаём и настраиваем фигуру для графика температуры
+        city_5_temp_graph = go.Figure(data = [go.Bar(
+                                    x = city_5_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_5_weather_df.query(f'index < {days}')['minimal_temp']),
+                                    go.Bar(
+                                    x = city_5_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_5_weather_df.query(f'index < {days}')['maximal_temp'])])
+        city_5_temp_graph.update_layout(width = 400, height = 400,
+                                    title = city_5)
+        
+        # создаём и настраиваем фигуру для графика влажности
+        city_5_humidity_graph = go.Figure(data = [go.Bar(
+                                    x = city_5_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_5_weather_df.query(f'index < {days}')['humidity_day_minimum']),
+                                    go.Bar(
+                                    x = city_5_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_5_weather_df.query(f'index < {days}')['humidity_day_maximum'])])
+        city_5_humidity_graph.update_layout(width = 400, height = 400,
+                                    title = city_5)
+        
+        # создаём и настраиваем фигуру для графика скорости ветра
+        city_5_wind_spd_graph = go.Figure(data = [go.Bar(
+                                    x = city_5_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_5_weather_df.query(f'index < {days}')['wind_day_speed'])])
+        city_5_wind_spd_graph.update_layout(width = 400, height = 400,
+                                    title = city_5)
+        
+        # создаём и настраиваем фигуру для графика с вероятностями осадков и льда
+        city_5_probabilities_graph = go.Figure(data = [go.Bar(
+                                    x = city_5_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_5_weather_df.query(f'index < {days}')['rain_day_probability']),
+                                    go.Bar(
+                                    x = city_5_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_5_weather_df.query(f'index < {days}')['snow_day_probability']),
+                                    go.Bar(
+                                    x = city_5_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_5_weather_df.query(f'index < {days}')['ice_day_probability'])])
+        city_5_probabilities_graph.update_layout(width = 400, height = 400,
+                                    title = city_5)
+
+        # создаём и настраиваем фигуру для графика с информацией об уф-индексе
+        city_5_uv_index_graph = go.Figure(data = [go.Bar(
+                                    x = city_5_weather_df.query(f'index < {days}')['date'], 
+                                    y = city_5_weather_df.query(f'index < {days}')['uv_index'])])
+        city_5_uv_index_graph.update_layout(width = 400, height = 400,
+                                    title = city_5)
+
+        if dropdown_value == 'Температура':
+            return city_5_temp_graph
+        
+        elif dropdown_value == 'Влажность':
+            return city_5_humidity_graph
+        
+        elif dropdown_value == 'Скорость ветра':
+            return city_5_wind_spd_graph
+        
+        elif dropdown_value == 'Вероятность осадков и льда':
+            return city_5_probabilities_graph
+        
+        elif dropdown_value == 'УФ-индекс':
+            return city_5_uv_index_graph
+        
+    else:
+        fig={'data': [
+                {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
+                {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': 'h'},
+            ],
+            'layout': {
+                'title': 'Barchart 5',
+                'width' : 400,
+                'height' : 400
+            }}
+        return fig
 
 if __name__ == '__main__':
     app.run(debug=True)
