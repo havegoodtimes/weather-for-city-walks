@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 
 
 forecast_hourly_api_url = 'http://dataservice.accuweather.com/forecasts/v1/daily/5day/'
-api_key = 'qV7vDxXTitSMqoxec5n77w5D5txhR7Kk'
+api_key = '91L9UG0hcqsEJAN1WSLZuc1kWjol4KIp'
 city_info_api_url = 'http://dataservice.accuweather.com/locations/v1/cities/search'
 
 class WeatherConditionManager:
@@ -19,7 +19,7 @@ class WeatherConditionManager:
         self.city_coordinates_cache = {}
         #Режим отладки, при котором загрузка происходит из файла 
         #(без использования api), для обхода лимита на количество вызовов у accuweather api
-        self.debug_mode = True
+        self.debug_mode = False
     
     def get_location_key_by_city(self, city):
         if self.debug_mode:
@@ -72,6 +72,8 @@ class WeatherConditionManager:
                 coordinates = [lat, lon]
                 self.city_coordinates_cache[city] = coordinates
                 return coordinates
+            else:
+                return [0, 0]
 
     def get_weather_info_5days(self, city):
         city = city.lower()
