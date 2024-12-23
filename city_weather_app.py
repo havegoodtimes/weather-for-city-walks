@@ -1,25 +1,3 @@
-#Moscow code 294021
-#Dubai code 323091
-#запрос данных по api и создание json файла
-# api_key = 'yI9Novx6WYEbkMGHp6D7rcjliPSrJTr0'
-# forecast_hourly_api_url = 'http://dataservice.accuweather.com/forecasts/v1/daily/5day/'
-# moscow_code = 294021
-# dubai_code = 323091
-
-# weather_info_moscow = requests.get(f'{forecast_hourly_api_url}{moscow_code}?apikey={api_key}&details=true&metric=true')
-# weather_info_dubai = requests.get(f'{forecast_hourly_api_url}{dubai_code}?apikey={api_key}&details=true&metric=true')
-
-# moscow_data = weather_info_moscow.json()
-# dubai_data = weather_info_dubai.json()
-
-# with open('moscow_forecast_24h.json', 'w') as file:
-#     json.dump(moscow_data, file)
-
-# with open('dubai_forecast_24h.json', 'w') as file:
-#     json.dump(dubai_data, file)
-
-
-
 import json
 import requests
 from dash import Dash, html, dcc, Input, Output, State, callback
@@ -28,31 +6,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-api_key = 'yI9Novx6WYEbkMGHp6D7rcjliPSrJTr0'
+
 forecast_hourly_api_url = 'http://dataservice.accuweather.com/forecasts/v1/daily/5day/'
-moscow_code = 294021
-dubai_code = 323091
-nyc_code = 349727
-amsterdam_code = 249758
-shanghai_code = 106577
-
-# weather_info_nyc = requests.get(f'{forecast_hourly_api_url}{nyc_code}?apikey={api_key}&details=true&metric=true')
-# weather_info_amsterdam = requests.get(f'{forecast_hourly_api_url}{amsterdam_code}?apikey={api_key}&details=true&metric=true')
-# weather_info_shanghai = requests.get(f'{forecast_hourly_api_url}{shanghai_code}?apikey={api_key}&details=true&metric=true')
-
-# nyc_data = weather_info_nyc.json()
-# amsterdam_data = weather_info_amsterdam.json()
-# shanghai_data = weather_info_shanghai.json()
-
-# with open('nyc_forecast_5days.json', 'w') as file:
-#     json.dump(nyc_data, file)
-
-# with open('amsterdam_forecast_5days.json', 'w') as file:
-#     json.dump(amsterdam_data, file)
-
-# with open('shanghai_forecast_5days.json', 'w') as file:
-#     json.dump(shanghai_data, file)
-
 api_key = 'qV7vDxXTitSMqoxec5n77w5D5txhR7Kk'
 city_info_api_url = 'http://dataservice.accuweather.com/locations/v1/cities/search'
 
@@ -64,27 +19,19 @@ class WeatherConditionManager:
         self.city_coordinates_cache = {}
         #Режим отладки, при котором загрузка происходит из файла 
         #(без использования api), для обхода лимита на количество вызовов у accuweather api
-        self.debug_mode = False
+        self.debug_mode = True
+    
     def get_location_key_by_city(self, city):
         if self.debug_mode:
             return 'code'
         
         city = city.lower()
-        # try:
         city_info = requests.get(f"{self.city_info_api_url}?apikey={self.api_key}&q={city}", params = 'Key')
-        if city_info.status_code == 200:
-            if city_info.json() == []:
-                return 'wrong_city_error'
-            city_data = city_info.json()
+        city_data = city_info.json()
 
-            location_key = city_data[0]['Key']
-            return location_key
-        else:
-            return city_info.status_code
-
-        # except:
-        #     return 'error'
-
+        location_key = city_data[0]['Key']
+        return location_key
+    
     def get_city_coordinates(self, city):
         city = city.lower()
         city_coordinates = self.city_coordinates_cache.get(city) 
@@ -126,9 +73,6 @@ class WeatherConditionManager:
                 self.city_coordinates_cache[city] = coordinates
                 return coordinates
 
-    
-
-
     def get_weather_info_5days(self, city):
         city = city.lower()
         forecast_api_url = 'http://dataservice.accuweather.com/forecasts/v1/daily/5day/'
@@ -140,14 +84,9 @@ class WeatherConditionManager:
             with open(f'C:/Users/Niko/Desktop/python_contest/Python_project_3/{city}_forecast_5days.json', 'r') as file:
                 weather_data = json.load(file)
         else:
-            location_key = self.get_location_key_by_city(city)
-            if (location_key in [400, 401, 403, 404, 500, 503] or 
-                location_key == 'wrong_city_error'):  
-                return location_key        
+            location_key = self.get_location_key_by_city(city)    
             weather_info = requests.get(f'{forecast_api_url}{location_key}?apikey={self.api_key}&details=true&metric=true')
-            
-            if weather_info.status_code == 200:
-                weather_data = weather_info.json()
+            weather_data = weather_info.json()
 
         weather_info_list = []
         for i in range(0, 5, 2):
@@ -175,7 +114,6 @@ class WeatherConditionManager:
         
         self.weather_cache[city] = weather_info_list
         return weather_info_list
-
         
     def create_weather_dataframe(self, city):
         weather_info_list = self.get_weather_info_5days(city)
@@ -218,35 +156,28 @@ class WeatherConditionManager:
         return weather_forecast_df
 
     def check_bad_weather_by_city(self, city):
-        try:
-            weather_info = (self.get_weather_info_5days(city))[0]
-               
-            if (weather_info in [400, 401, 403, 404, 500, 503] 
-                or weather_info == 'wrong_city_error'):
-                return weather_info
+        weather_info = (self.get_weather_info_5days(city))[0]
 
-            if (weather_info['minimal_temp'] < -10.0 or 
-                weather_info['maximal_temp'] > 30.0 or
-                weather_info['wind_day_speed'] > 36.0 or
-                weather_info['rain_day_probability'] > 60 or 
-                weather_info['snow_day_probability'] > 60 or
-                weather_info['ice_day_probability'] > 60 or
-                weather_info['uv_index'] > 7): 
+        if (weather_info['minimal_temp'] < -10.0 or 
+            weather_info['maximal_temp'] > 30.0 or
+            weather_info['wind_day_speed'] > 36.0 or
+            weather_info['rain_day_probability'] > 60 or 
+            weather_info['snow_day_probability'] > 60 or
+            weather_info['ice_day_probability'] > 60 or
+            weather_info['uv_index'] > 7): 
 
-                status = 'Завтра плохая погода для прогулки'
-                return status
-            else:
-                status = 'Завтра хорошая погода для прогулки'
-                return status
-            
-        except:
-            return 'error'
+            status = 'Завтра плохая погода для прогулки'
+            return status
+        else:
+            status = 'Завтра хорошая погода для прогулки'
+            return status
+
 
 app = Dash()
 get_info = WeatherConditionManager(api_key, city_info_api_url)
 
 app.layout = [
-        html.Div(id = 'cities_output',
+            html.Div(id = 'introduction',
                   children='Введите название городов:'),
             html.Div(id = 'radio_items_description',
                      children='Выберите, на сколько дней вы хотите видеть прогноз погоды:'),
@@ -267,7 +198,7 @@ app.layout = [
               )),
             html.Div(id = 'dropdown_description_1',
                   children='Выберите интересующие метрики прогноза погода:'),
-              html.Div(id = 'dropdown_container_1',
+            html.Div(id = 'dropdown_container_1',
                        children = [dcc.Dropdown(id = 'city_1_dropdown',
                            options=['Температура', 'Влажность', 'Скорость ветра',
                                     'Вероятность осадков и льда', 'УФ-индекс'],
@@ -392,22 +323,17 @@ app.layout = [
                                                                ])]
             
 
-#callback, который обновляет первую строку на странице (информация о выбранных городах)
+#callback, отвечающий за отображение/скрытие 1 строки на странице
 
-@app.callback(
-    Output(component_id='cities_output',
-           component_property='children'),
-    Input(component_id='submit_cities',
-          component_property='n_clicks'),
-    [State(component_id='city_1_input', 
-           component_property='value'),
-    State(component_id='city_2_input',
-          component_property='value')],
-    prevent_initial_call = True
-)
+@app.callback(Output(component_id='introduction',
+                     component_property='style'),
+            Input(component_id='submit_cities',
+          component_property='n_clicks'))
 
-def print_cities(n_clicks, city_1, city_2):
-    return f'Первый город: {city_1}, Второй город: {city_2}'
+def hide_introduction(n_clicks):
+    if n_clicks != 0:
+        return {'display' : 'none'}
+    return {'display' : 'block'}
 
 #callback, отвечающий за отображение/скрытие графика для 1 города
 
@@ -462,49 +388,69 @@ def create_graphic_1(n_clicks, dropdown_value, radio_item_value, city_1):
     # создаём и настраиваем фигуру для графика температуры
     city_1_temp_graph = go.Figure(data = [go.Bar(
                                    x = city_1_weather_df.query(f'index < {days}')['date'], 
-                                   y = city_1_weather_df.query(f'index < {days}')['minimal_temp']),
+                                   y = city_1_weather_df.query(f'index < {days}')['minimal_temp'],
+                                   name = "Минимальная<br>температура"),
                                    go.Bar(
                                    x = city_1_weather_df.query(f'index < {days}')['date'], 
-                                   y = city_1_weather_df.query(f'index < {days}')['maximal_temp'])])
-    city_1_temp_graph.update_layout(width = 400, height = 400,
-                                title = city_1)
+                                   y = city_1_weather_df.query(f'index < {days}')['maximal_temp'],
+                                   name = 'Максимальная<br>температура')])
+    city_1_temp_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="Максимальная и минимальная<br>температура"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Температура (Цельсии)")))
     
     # создаём и настраиваем фигуру для графика влажности
     city_1_humidity_graph = go.Figure(data = [go.Bar(
                                    x = city_1_weather_df.query(f'index < {days}')['date'], 
-                                   y = city_1_weather_df.query(f'index < {days}')['humidity_day_minimum']),
+                                   y = city_1_weather_df.query(f'index < {days}')['humidity_day_minimum'],
+                                   name = "Минимальная<br>влажность"),
                                    go.Bar(
                                    x = city_1_weather_df.query(f'index < {days}')['date'], 
-                                   y = city_1_weather_df.query(f'index < {days}')['humidity_day_maximum'])])
-    city_1_humidity_graph.update_layout(width = 400, height = 400,
-                                title = city_1)
+                                   y = city_1_weather_df.query(f'index < {days}')['humidity_day_maximum'],
+                                   name = "Максимальная<br>влажность")])
+    city_1_humidity_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="Максимальная и минимальная<br>влажность"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Влажность (%)")))
     
     # создаём и настраиваем фигуру для графика скорости ветра
     city_1_wind_spd_graph = go.Figure(data = [go.Bar(
                                    x = city_1_weather_df.query(f'index < {days}')['date'], 
-                                   y = city_1_weather_df.query(f'index < {days}')['wind_day_speed'])])
-    city_1_wind_spd_graph.update_layout(width = 400, height = 400,
-                                title = city_1)
+                                   y = city_1_weather_df.query(f'index < {days}')['wind_day_speed'],
+                                   name = "Скорость<br>ветра")])
+                                   
+    city_1_wind_spd_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="Скорость ветра"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Скорость (м/c)")))
     
     # создаём и настраиваем фигуру для графика с вероятностями осадков и льда
     city_1_probabilities_graph = go.Figure(data = [go.Bar(
                                    x = city_1_weather_df.query(f'index < {days}')['date'], 
-                                   y = city_1_weather_df.query(f'index < {days}')['rain_day_probability']),
+                                   y = city_1_weather_df.query(f'index < {days}')['rain_day_probability'],
+                                   name = "Дождь"),
                                    go.Bar(
                                    x = city_1_weather_df.query(f'index < {days}')['date'], 
-                                   y = city_1_weather_df.query(f'index < {days}')['snow_day_probability']),
+                                   y = city_1_weather_df.query(f'index < {days}')['snow_day_probability'],
+                                   name = "Снег"),
                                    go.Bar(
                                    x = city_1_weather_df.query(f'index < {days}')['date'], 
-                                   y = city_1_weather_df.query(f'index < {days}')['ice_day_probability'])])
-    city_1_probabilities_graph.update_layout(width = 400, height = 400,
-                                title = city_1)
+                                   y = city_1_weather_df.query(f'index < {days}')['ice_day_probability'],
+                                   name = "Лёд")])
+    city_1_probabilities_graph.update_layout(width = 600, height = 600,
+                                title =  dict(text="Вероятность осадков и льда"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Вероятность (%)")))
 
     # создаём и настраиваем фигуру для графика с информацией об уф-индексе
     city_1_uv_index_graph = go.Figure(data = [go.Bar(
                                    x = city_1_weather_df.query(f'index < {days}')['date'], 
-                                   y = city_1_weather_df.query(f'index < {days}')['uv_index'])])
-    city_1_uv_index_graph.update_layout(width = 400, height = 400,
-                                title = city_1)
+                                   y = city_1_weather_df.query(f'index < {days}')['uv_index'],
+                                   name = "УФ-индекс")])
+    city_1_uv_index_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="УФ-индекс"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Уровень")))
 
     if dropdown_value == 'Температура':
         return city_1_temp_graph
@@ -551,49 +497,68 @@ def create_graphic_2(n_clicks, dropdown_value, radio_item_value, city_2):
     # создаём и настраиваем фигуру для графика температуры
     city_2_temp_graph = go.Figure(data = [go.Bar(
                                    x = city_2_weather_df.query(f'index < {days}')['date'], 
-                                   y = city_2_weather_df.query(f'index < {days}')['minimal_temp']),
+                                   y = city_2_weather_df.query(f'index < {days}')['minimal_temp'],
+                                   name = "Минимальная<br>температура"),
                                    go.Bar(
                                    x = city_2_weather_df.query(f'index < {days}')['date'], 
-                                   y = city_2_weather_df.query(f'index < {days}')['maximal_temp'])])
-    city_2_temp_graph.update_layout(width = 400, height = 400,
-                                title = city_2)
+                                   y = city_2_weather_df.query(f'index < {days}')['maximal_temp'],
+                                   name = "Максимальная<br>температура")])
+    city_2_temp_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="Максимальная и минимальная<br>температура"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Температура (Цельсии)")))
     
     # создаём и настраиваем фигуру для графика влажности
     city_2_humidity_graph = go.Figure(data = [go.Bar(
                                    x = city_2_weather_df.query(f'index < {days}')['date'], 
-                                   y = city_2_weather_df.query(f'index < {days}')['humidity_day_minimum']),
+                                   y = city_2_weather_df.query(f'index < {days}')['humidity_day_minimum'],
+                                   name = "Минимальная<br>влажность"),
                                    go.Bar(
                                    x = city_2_weather_df.query(f'index < {days}')['date'], 
-                                   y = city_2_weather_df.query(f'index < {days}')['humidity_day_maximum'])])
-    city_2_humidity_graph.update_layout(width = 400, height = 400,
-                                title = city_2)
+                                   y = city_2_weather_df.query(f'index < {days}')['humidity_day_maximum'],
+                                   name = "Максимальная<br>влажность")])
+    city_2_humidity_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="Максимальная и минимальная<br>влажность"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Влажность (%)")))
     
     # создаём и настраиваем фигуру для графика скорости ветра
     city_2_wind_spd_graph = go.Figure(data = [go.Bar(
                                    x = city_2_weather_df.query(f'index < {days}')['date'], 
-                                   y = city_2_weather_df.query(f'index < {days}')['wind_day_speed'])])
-    city_2_wind_spd_graph.update_layout(width = 400, height = 400,
-                                title = city_2)
+                                   y = city_2_weather_df.query(f'index < {days}')['wind_day_speed'],
+                                   name = "Скорость<br>ветра")])
+    city_2_wind_spd_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="Скорость ветра"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Скорость (м/c)")))
     
     # создаём и настраиваем фигуру для графика с вероятностями осадков и льда
     city_2_probabilities_graph = go.Figure(data = [go.Bar(
                                    x = city_2_weather_df.query(f'index < {days}')['date'], 
-                                   y = city_2_weather_df.query(f'index < {days}')['rain_day_probability']),
+                                   y = city_2_weather_df.query(f'index < {days}')['rain_day_probability'],
+                                   name = "Дождь"),
                                    go.Bar(
                                    x = city_2_weather_df.query(f'index < {days}')['date'], 
-                                   y = city_2_weather_df.query(f'index < {days}')['snow_day_probability']),
+                                   y = city_2_weather_df.query(f'index < {days}')['snow_day_probability'],
+                                   name = "Снег"),
                                    go.Bar(
                                    x = city_2_weather_df.query(f'index < {days}')['date'], 
-                                   y = city_2_weather_df.query(f'index < {days}')['ice_day_probability'])])
-    city_2_probabilities_graph.update_layout(width = 400, height = 400,
-                                title = city_2)
+                                   y = city_2_weather_df.query(f'index < {days}')['ice_day_probability'],
+                                   name = "Лёд")])
+    city_2_probabilities_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="Вероятность осадков и льда"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Вероятность (%)")))
 
     # создаём и настраиваем фигуру для графика с информацией об уф-индексе
     city_2_uv_index_graph = go.Figure(data = [go.Bar(
                                    x = city_2_weather_df.query(f'index < {days}')['date'], 
-                                   y = city_2_weather_df.query(f'index < {days}')['uv_index'])])
-    city_2_uv_index_graph.update_layout(width = 400, height = 400,
-                                title = city_2)
+                                   y = city_2_weather_df.query(f'index < {days}')['uv_index'],
+                                   name = "УФ-индекс")])
+    city_2_uv_index_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="УФ-индекс"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Уровень")))
 
     if dropdown_value == 'Температура':
         return city_2_temp_graph
@@ -861,49 +826,69 @@ def create_graphic_3(submit_clicks, dropdown_value, radio_item_value, city_3, ad
         # создаём и настраиваем фигуру для графика температуры
         city_3_temp_graph = go.Figure(data = [go.Bar(
                                     x = city_3_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_3_weather_df.query(f'index < {days}')['minimal_temp']),
+                                    y = city_3_weather_df.query(f'index < {days}')['minimal_temp'],
+                                    name = "Минимальная<br>температура"),
                                     go.Bar(
                                     x = city_3_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_3_weather_df.query(f'index < {days}')['maximal_temp'])])
-        city_3_temp_graph.update_layout(width = 400, height = 400,
-                                    title = city_3)
+                                    y = city_3_weather_df.query(f'index < {days}')['maximal_temp'],
+                                    name = "Максимальная<br>температура")])
+        city_3_temp_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="Максимальная и минимальная<br>температура"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Температура (Цельсии)")))
         
         # создаём и настраиваем фигуру для графика влажности
         city_3_humidity_graph = go.Figure(data = [go.Bar(
                                     x = city_3_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_3_weather_df.query(f'index < {days}')['humidity_day_minimum']),
+                                    y = city_3_weather_df.query(f'index < {days}')['humidity_day_minimum'],
+                                    name = "Минимальная<br>влажность"),
                                     go.Bar(
                                     x = city_3_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_3_weather_df.query(f'index < {days}')['humidity_day_maximum'])])
-        city_3_humidity_graph.update_layout(width = 400, height = 400,
-                                    title = city_3)
+                                    y = city_3_weather_df.query(f'index < {days}')['humidity_day_maximum'],
+                                    name = "Максимальная<br>влажность"
+                                    )])
+        city_3_humidity_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="Максимальная и минимальная<br>влажность"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Влажность (%)")))
         
         # создаём и настраиваем фигуру для графика скорости ветра
         city_3_wind_spd_graph = go.Figure(data = [go.Bar(
                                     x = city_3_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_3_weather_df.query(f'index < {days}')['wind_day_speed'])])
-        city_3_wind_spd_graph.update_layout(width = 400, height = 400,
-                                    title = city_3)
+                                    y = city_3_weather_df.query(f'index < {days}')['wind_day_speed'],
+                                    name = "Скорость<br>ветра")])
+        city_3_wind_spd_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="Скорость ветра"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Скорость (м/c)")))
         
         # создаём и настраиваем фигуру для графика с вероятностями осадков и льда
         city_3_probabilities_graph = go.Figure(data = [go.Bar(
                                     x = city_3_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_3_weather_df.query(f'index < {days}')['rain_day_probability']),
+                                    y = city_3_weather_df.query(f'index < {days}')['rain_day_probability'],
+                                    name = "Дождь"),
                                     go.Bar(
                                     x = city_3_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_3_weather_df.query(f'index < {days}')['snow_day_probability']),
+                                    y = city_3_weather_df.query(f'index < {days}')['snow_day_probability'],
+                                    name = "Снег"),
                                     go.Bar(
                                     x = city_3_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_3_weather_df.query(f'index < {days}')['ice_day_probability'])])
-        city_3_probabilities_graph.update_layout(width = 400, height = 400,
-                                    title = city_3)
+                                    y = city_3_weather_df.query(f'index < {days}')['ice_day_probability'],
+                                    name = "Лёд")])
+        city_3_probabilities_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="Вероятность осадков и льда"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Вероятность (%)")))
 
         # создаём и настраиваем фигуру для графика с информацией об уф-индексе
         city_3_uv_index_graph = go.Figure(data = [go.Bar(
                                     x = city_3_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_3_weather_df.query(f'index < {days}')['uv_index'])])
-        city_3_uv_index_graph.update_layout(width = 400, height = 400,
-                                    title = city_3)
+                                    y = city_3_weather_df.query(f'index < {days}')['uv_index'],
+                                    name = "УФ-индекс")])
+        city_3_uv_index_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="УФ-индекс"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Уровень")))
 
         if dropdown_value == 'Температура':
             return city_3_temp_graph
@@ -967,49 +952,68 @@ def create_graphic_4(submit_clicks, dropdown_value, radio_item_value, city_4, ad
         # создаём и настраиваем фигуру для графика температуры
         city_4_temp_graph = go.Figure(data = [go.Bar(
                                     x = city_4_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_4_weather_df.query(f'index < {days}')['minimal_temp']),
+                                    y = city_4_weather_df.query(f'index < {days}')['minimal_temp'],
+                                    name = "Минимальная<br>температура"),
                                     go.Bar(
                                     x = city_4_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_4_weather_df.query(f'index < {days}')['maximal_temp'])])
-        city_4_temp_graph.update_layout(width = 400, height = 400,
-                                    title = city_4)
+                                    y = city_4_weather_df.query(f'index < {days}')['maximal_temp'],
+                                    name = "Максимальная<br>температура")])
+        city_4_temp_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="Максимальная и минимальная<br>температура"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Температура (Цельсии)")))
         
         # создаём и настраиваем фигуру для графика влажности
         city_4_humidity_graph = go.Figure(data = [go.Bar(
                                     x = city_4_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_4_weather_df.query(f'index < {days}')['humidity_day_minimum']),
+                                    y = city_4_weather_df.query(f'index < {days}')['humidity_day_minimum'],
+                                    name = "Минимальная<br>влажность"),
                                     go.Bar(
                                     x = city_4_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_4_weather_df.query(f'index < {days}')['humidity_day_maximum'])])
-        city_4_humidity_graph.update_layout(width = 400, height = 400,
-                                    title = city_4)
+                                    y = city_4_weather_df.query(f'index < {days}')['humidity_day_maximum'],
+                                    name = "Максимальная<br>влажность")])
+        city_4_humidity_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="Максимальная и минимальная<br>влажность"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Влажность (%)")))
         
         # создаём и настраиваем фигуру для графика скорости ветра
         city_4_wind_spd_graph = go.Figure(data = [go.Bar(
                                     x = city_4_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_4_weather_df.query(f'index < {days}')['wind_day_speed'])])
-        city_4_wind_spd_graph.update_layout(width = 400, height = 400,
-                                    title = city_4)
+                                    y = city_4_weather_df.query(f'index < {days}')['wind_day_speed'],
+                                    name = "Скорость<br>ветра")])
+        city_4_wind_spd_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="Скорость ветра"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Скорость (м/c)")))
         
         # создаём и настраиваем фигуру для графика с вероятностями осадков и льда
         city_4_probabilities_graph = go.Figure(data = [go.Bar(
                                     x = city_4_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_4_weather_df.query(f'index < {days}')['rain_day_probability']),
+                                    y = city_4_weather_df.query(f'index < {days}')['rain_day_probability'],
+                                    name = "Дождь"),
                                     go.Bar(
                                     x = city_4_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_4_weather_df.query(f'index < {days}')['snow_day_probability']),
+                                    y = city_4_weather_df.query(f'index < {days}')['snow_day_probability'],
+                                    name = "Снег"),
                                     go.Bar(
                                     x = city_4_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_4_weather_df.query(f'index < {days}')['ice_day_probability'])])
-        city_4_probabilities_graph.update_layout(width = 400, height = 400,
-                                    title = city_4)
+                                    y = city_4_weather_df.query(f'index < {days}')['ice_day_probability'],
+                                    name = "Лёд")])
+        city_4_probabilities_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="Вероятность осадков и льда"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Вероятность (%)")))
 
         # создаём и настраиваем фигуру для графика с информацией об уф-индексе
         city_4_uv_index_graph = go.Figure(data = [go.Bar(
                                     x = city_4_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_4_weather_df.query(f'index < {days}')['uv_index'])])
-        city_4_uv_index_graph.update_layout(width = 400, height = 400,
-                                    title = city_4)
+                                    y = city_4_weather_df.query(f'index < {days}')['uv_index'],
+                                    name = "УФ-индекс")])
+        city_4_uv_index_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="УФ-индекс"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Уровень")))
 
         if dropdown_value == 'Температура':
             return city_4_temp_graph
@@ -1028,8 +1032,8 @@ def create_graphic_4(submit_clicks, dropdown_value, radio_item_value, city_4, ad
         
     else:
         fig={'data': [
-                # {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
-                # {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': 'h'},
+                {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
+                {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': 'h'},
             ],
             'layout': {
                 'title': 'Barchart 4',
@@ -1073,48 +1077,65 @@ def create_graphic_5(submit_clicks, dropdown_value, radio_item_value, city_5, ad
         # создаём и настраиваем фигуру для графика температуры
         city_5_temp_graph = go.Figure(data = [go.Bar(
                                     x = city_5_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_5_weather_df.query(f'index < {days}')['minimal_temp']),
+                                    y = city_5_weather_df.query(f'index < {days}')['minimal_temp'],
+                                    name = "Минимальная<br>температура"),
                                     go.Bar(
                                     x = city_5_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_5_weather_df.query(f'index < {days}')['maximal_temp'])])
-        city_5_temp_graph.update_layout(width = 400, height = 400,
-                                    title = city_5)
+                                    y = city_5_weather_df.query(f'index < {days}')['maximal_temp'],
+                                    name = "Максимальная<br>температура")])
+        city_5_temp_graph.update_layout(width = 600, height = 600,
+                                    title = dict(text="Максимальная и минимальная<br>температура"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Температура (Цельсии)")))
         
         # создаём и настраиваем фигуру для графика влажности
         city_5_humidity_graph = go.Figure(data = [go.Bar(
                                     x = city_5_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_5_weather_df.query(f'index < {days}')['humidity_day_minimum']),
+                                    y = city_5_weather_df.query(f'index < {days}')['humidity_day_minimum'],
+                                    name = "Минимальная<br>влажность"),
                                     go.Bar(
                                     x = city_5_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_5_weather_df.query(f'index < {days}')['humidity_day_maximum'])])
-        city_5_humidity_graph.update_layout(width = 400, height = 400,
-                                    title = city_5)
+                                    y = city_5_weather_df.query(f'index < {days}')['humidity_day_maximum'],
+                                    name = "Максимальная<br>влажность")])
+        city_5_humidity_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="Максимальная и минимальная<br>влажность"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Влажность (%)")))
         
         # создаём и настраиваем фигуру для графика скорости ветра
         city_5_wind_spd_graph = go.Figure(data = [go.Bar(
                                     x = city_5_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_5_weather_df.query(f'index < {days}')['wind_day_speed'])])
-        city_5_wind_spd_graph.update_layout(width = 400, height = 400,
-                                    title = city_5)
+                                    y = city_5_weather_df.query(f'index < {days}')['wind_day_speed'],
+                                    name = "Скорость<br>ветра")])
+        city_5_wind_spd_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="Скорость ветра"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Скорость (м/c)")))
         
         # создаём и настраиваем фигуру для графика с вероятностями осадков и льда
         city_5_probabilities_graph = go.Figure(data = [go.Bar(
                                     x = city_5_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_5_weather_df.query(f'index < {days}')['rain_day_probability']),
+                                    y = city_5_weather_df.query(f'index < {days}')['rain_day_probability'],
+                                    name = "Дождь"),
                                     go.Bar(
                                     x = city_5_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_5_weather_df.query(f'index < {days}')['snow_day_probability']),
+                                    y = city_5_weather_df.query(f'index < {days}')['snow_day_probability'],
+                                    name = "Снег"),
                                     go.Bar(
                                     x = city_5_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_5_weather_df.query(f'index < {days}')['ice_day_probability'])])
-        city_5_probabilities_graph.update_layout(width = 400, height = 400,
-                                    title = city_5)
+                                    y = city_5_weather_df.query(f'index < {days}')['ice_day_probability'],
+                                    name = "Снег")])
+        city_5_probabilities_graph.update_layout(width = 600, height = 600,
+                                title = dict(text="Вероятность осадков и льда"),
+                                xaxis = dict(title = dict(text = "Дата")),
+                                yaxis = dict(title = dict(text = "Вероятность (%)")))
 
         # создаём и настраиваем фигуру для графика с информацией об уф-индексе
         city_5_uv_index_graph = go.Figure(data = [go.Bar(
                                     x = city_5_weather_df.query(f'index < {days}')['date'], 
-                                    y = city_5_weather_df.query(f'index < {days}')['uv_index'])])
-        city_5_uv_index_graph.update_layout(width = 400, height = 400,
+                                    y = city_5_weather_df.query(f'index < {days}')['uv_index'],
+                                    name = "УФ-индекс")])
+        city_5_uv_index_graph.update_layout(width = 600, height = 600,
                                     title = city_5)
 
         if dropdown_value == 'Температура':
@@ -1156,15 +1177,10 @@ def hide_map(submit_clicks):
     return {'display' : 'none'}
 
 #callback, который создаёт карту с городами
-#callback, который строит графики для 5 города
 @app.callback(Output(component_id='map',
                      component_property='figure'),
-            [Input(component_id='submit_cities',
+            Input(component_id='submit_cities',
                   component_property='n_clicks'),
-            Input(component_id='city_5_dropdown',
-                  component_property='value'),
-            Input(component_id='radio_items',
-                  component_property='value')],
             [State(component_id='city_1_input', 
            component_property='value'),
            State(component_id='city_2_input', 
@@ -1179,7 +1195,7 @@ def hide_map(submit_clicks):
                 component_property='n_clicks') ],
             prevent_initial_call = True)
 
-def create_graphic_5(submit_clicks, dropdown_value, radio_item_value, city_1,
+def create_graphic_5(submit_clicks, city_1,
                      city_2, city_3, city_4, city_5, add_city_clicks):
     global get_info
     
